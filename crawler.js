@@ -8,32 +8,42 @@ for (var i = 65; i < 65 + 26; i++) {
 	alphabet.push(String.fromCharCode(i));
 }
 
+alphabet = ['A', 'B', 'C', 'D'];
 alphabet = ['A', 'B'];
 
 /* query each thing in alphabet. if return value == "too many results" pop
 this element and insert a new one containing the query + each alphabet
 char. */
 var not_yet_returned = 0;
+var queue = [];
+var worker_interval;
 
 function worker(q) {
+	if (queue.length === 0 && not_yet_returned === 0)
+		clearInterval(worker_interval);
+
 	if (not_yet_returned > 10) {
-		console.log("timeout")
-		setTimeout(500, worker(q));
+		//console.log("timeout")
+		return;
 	} else if (not_yet_returned <= 10) {
-		handle(q);
+		for (i = 0; i < 10 - not_yet_returned; i++) {
+			if (queue.length === 0) continue;
+			handle(queue.pop());
+		}
 	}
 };
+
 
 function handle(q) {
 	console.log("handling " + q)
 	not_yet_returned++;
 	query_name(q, function(result) {
-		console.log(result);
+		//console.log(result);
 		not_yet_returned--;
 		if (result === false) {
 			/* populate with "foo" + [a, b, c, ...] */
 			for (var a in alphabet) {
-				worker(q + alphabet[a]);
+				queue.push(q + alphabet[a]);
 			}
 		} else {
 			fs.appendFile('results.csv', csv(result), function (err) {
@@ -55,10 +65,36 @@ function csv(json) {
 	return out;
 }
 
+function query_name(term, cb) {
+	var get_params = {group: "all", lang: "de", query: term};
+	request.get("http://ab.uni-ulm.de/ab/search.pl", get_params, 
+			{timeout: 10000})
+		.when(function (err, _, data) {
+			if (err) throw err;
+
+			content = data.toString("utf8");
+			//console.log(content);
+
+			if (content.match(/Bitte genaueren Suchbegriff eingeben./gi)) {
+				cb(false);
+			} else {
+				var data = parse(content);
+				console.log("done with " + term);
+				cb(data);
+			}
+	});
+}
+
 (function init() {
+	var headings = '"Name";"Einrichtung";"Gebaeude";"E-Mail";"Telefon";"Telefax";"Mobil";"WWW";\n';
+	fs.writeFile('results.csv', headings, function (err) {
+		if (err) throw err;
+	});
+
 	for (var a in alphabet) {
-		worker(alphabet[a]);
+		queue.push(alphabet[a]);
 	}
+	worker_interval = setInterval(worker, 500);
 })();
 
 
@@ -113,44 +149,33 @@ function parse(content) {
 
 	var pos = content.indexOf("<h3>");
 	while (pos >= 0) {
-			var currentOne = content.substr(0, content.indexOf("</table>") + 8).trim();
-			var td = 0;
-			var currentData = {}; 
-			currentData.name = currentOne.substr(4, currentOne.indexOf("</h3>") - 4).replace("<h3>","");
-			currentData.einrichtung = getTdContent(currentOne, td++);
-			currentData.einrichtung = currentData.einrichtung.replace(/<a\b[^>]*>/i,"").replace(/<\/a>/i, "");
+		var currentOne = content.substr(0, content.indexOf("</table>") + 8).trim();
+		var td = 0;
+		var currentData = {}; 
+		currentData.name = currentOne.substr(4, currentOne.indexOf("</h3>") - 4).replace("<h3>","");
+		// the name is separated through "last, first, etc.".  switch this.
+		currentData.name = currentData.name.split(", ").reverse().join(" ");
 
-			currentData.gebaeude = getTdContent(currentOne, td++);
-			currentData.email = getTdContent(currentOne, td++);
-			currentData.email = currentData.email.replace(/<a\b[^>]*>/i,"").replace(/<\/a>/i, "");
-			currentData.telefon = getTdContent(currentOne, td++, 'telefon');
-			currentData.telefax = getTdContent(currentOne, td++, 'telefax');
-			currentData.mobil = getTdContent(currentOne, td++);
-			currentData.www = getTdContent(currentOne, td++);
 
-			content = content.substr(content.indexOf("</table>") + 8, content.length);
-			pos = content.indexOf("<h3>");
-			allData.push(currentData);
+		currentData.einrichtung = getTdContent(currentOne, td++);
+		currentData.einrichtung = currentData.einrichtung.replace(/<a\b[^>]*>/i,"").replace(/<\/a>/i, "");
+
+		currentData.gebaeude = getTdContent(currentOne, td++);
+		currentData.email = getTdContent(currentOne, td++);
+		currentData.email = currentData.email.replace(/<a\b[^>]*>/i,"").replace(/<\/a>/i, "");
+
+		currentData.telefon = getTdContent(currentOne, td++, 'telefon');
+		currentData.telefax = getTdContent(currentOne, td++, 'telefax');
+		currentData.mobil = getTdContent(currentOne, td++);
+		currentData.www = getTdContent(currentOne, td++);
+		currentData.www = currentData.www.replace(/<a\b[^>]*>/i,"").replace(/<\/a>/i, "");
+
+		content = content.substr(content.indexOf("</table>") + 8, content.length);
+		pos = content.indexOf("<h3>");
+		allData.push(currentData);
 	}
 	return allData;
 }
 
-function query_name(term, cb) {
-	request.get("http://ab.uni-ulm.de/ab/search.pl" 
-		    , {group: "all", lang: "de", query: term}
-		    , {timeout: 10000})
-		.when(function (err, Xhr_Or_NodeResponse, data) {
-			content = data.toString("utf8");
-			//console.log(content);
-
-			if (content.match(/Bitte genaueren Suchbegriff eingeben./gi)) {
-				cb(false);
-			} else {
-				var data = parse(content);
-				console.log("done with " + term);
-				cb(data);
-			}
-	});
-}
 
 
