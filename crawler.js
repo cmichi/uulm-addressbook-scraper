@@ -8,7 +8,7 @@ for (var i = 65; i < 65 + 26; i++) {
 	alphabet.push(String.fromCharCode(i));
 }
 
-alphabet = ['A'];
+alphabet = ['A', 'B'];
 
 /* query each thing in alphabet. if return value == "too many results" pop
 this element and insert a new one containing the query + each alphabet
@@ -36,17 +36,33 @@ function handle(q) {
 				worker(q + alphabet[a]);
 			}
 		} else {
-			fs.appendFile('results.csv', result, function (err) {
+			fs.appendFile('results.csv', csv(result), function (err) {
 				if (err) throw err;
 			});
 		}
 	});
 }
 
-for (var a in alphabet) {
-	worker(alphabet[a]);
+function csv(json) {
+	var out = "";
+	for (var i in json) {
+		for (var j in json[i]) {
+			out += '"' + json[i][j] + '";';
+		}
+		out += "\n";
+	}
+
+	return out;
 }
 
+(function init() {
+	for (var a in alphabet) {
+		worker(alphabet[a]);
+	}
+})();
+
+
+// rewrite all below!
 String.prototype.trim = function() { return this.replace(/^\s+|\s+$/, ''); };
 
 function getTdContent(content, nr, typ) {
@@ -90,60 +106,51 @@ function getTdContent(content, nr, typ) {
 	return content;
 }
 
+function parse(content) {
+	var allData = [];
+	content = content.substr(content.indexOf("<h2>Ihr Suchergebnis:</h2><br>") + 30);
+	content = content.substr(0, content.indexOf("<hr />"));
 
-function query_name(term, cb) {
-	request.get("http://ab.uni-ulm.de/ab/search.pl", 
-			{group: "all", lang: "de", query: term}, {timeout: 10000})
-	.when(function (err, Xhr_Or_NodeResponse, data) {
-		content = data.toString("utf8");
-		//console.log(content);
-		var allData = [];
+	var pos = content.indexOf("<h3>");
+	while (pos >= 0) {
+			var currentOne = content.substr(0, content.indexOf("</table>") + 8).trim();
+			var td = 0;
+			var currentData = {}; 
+			currentData.name = currentOne.substr(4, currentOne.indexOf("</h3>") - 4).replace("<h3>","");
+			currentData.einrichtung = getTdContent(currentOne, td++);
+			currentData.einrichtung = currentData.einrichtung.replace(/<a\b[^>]*>/i,"").replace(/<\/a>/i, "");
 
-		if (content.match(/Bitte genaueren Suchbegriff eingeben./gi)) {
-			cb(false);
-		} else {
-			content = content.substr(content.indexOf("<h2>Ihr Suchergebnis:</h2><br>") + 30);
-			content = content.substr(0, content.indexOf("<hr />"));
+			currentData.gebaeude = getTdContent(currentOne, td++);
+			currentData.email = getTdContent(currentOne, td++);
+			currentData.email = currentData.email.replace(/<a\b[^>]*>/i,"").replace(/<\/a>/i, "");
+			currentData.telefon = getTdContent(currentOne, td++, 'telefon');
+			currentData.telefax = getTdContent(currentOne, td++, 'telefax');
+			currentData.mobil = getTdContent(currentOne, td++);
+			currentData.www = getTdContent(currentOne, td++);
 
-			var pos = content.indexOf("<h3>");
-			while (pos >= 0) {
-					var currentOne = content.substr(0, content.indexOf("</table>") + 8).trim();
-					var td = 0;
-					var currentData = {}; 
-					currentData.name = currentOne.substr(4, currentOne.indexOf("</h3>") - 4).replace("<h3>","");
-					currentData.einrichtung = getTdContent(currentOne, td++);
-					currentData.gebaeude = getTdContent(currentOne, td++);
-					currentData.email = getTdContent(currentOne, td++);
-					currentData.telefon = getTdContent(currentOne, td++, 'telefon');
-					currentData.telefax = getTdContent(currentOne, td++, 'telefax');
-					currentData.mobil = getTdContent(currentOne, td++);
-					currentData.www = getTdContent(currentOne, td++);
-
-					content = content.substr(content.indexOf("</table>") + 8, content.length);
-					pos = content.indexOf("<h3>");
-					allData.push(currentData);
-				}
-
-				console.log("done with " + term);
-				console.log(allData);
-				//outputAsCsv(allData, false);
-				cb(allData);
-		}
-
-
-
-	});
+			content = content.substr(content.indexOf("</table>") + 8, content.length);
+			pos = content.indexOf("<h3>");
+			allData.push(currentData);
+	}
+	return allData;
 }
 
-function outputAsCsv(json, withHeader) {
-	for (var i in json) {
-		var outp = "";
-		for (var j in json[i]) {
-			outp += json[i][j] != '' ? "'" + json[i][j] + "';" : ";";
-			//console.log("'" + json[i] + '";');
-		}
-		console.log(outp);
-	}
+function query_name(term, cb) {
+	request.get("http://ab.uni-ulm.de/ab/search.pl" 
+		    , {group: "all", lang: "de", query: term}
+		    , {timeout: 10000})
+		.when(function (err, Xhr_Or_NodeResponse, data) {
+			content = data.toString("utf8");
+			//console.log(content);
+
+			if (content.match(/Bitte genaueren Suchbegriff eingeben./gi)) {
+				cb(false);
+			} else {
+				var data = parse(content);
+				console.log("done with " + term);
+				cb(data);
+			}
+	});
 }
 
 
