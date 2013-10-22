@@ -38,13 +38,15 @@ function worker(q) {
 
 
 function handle(q) {
-	console.log("handling " + q)
+	console.log("handling " + q);
 	not_yet_returned++;
+
 	query_name(q, function(result) {
 		//console.log(result);
 		not_yet_returned--;
+
 		if (result === false) {
-			/* populate with "foo" + [a, b, c, ...] */
+			/* populate with "AB" + [a, b, c, ...] */
 			for (var a in alphabet) {
 				queue.push(q + alphabet[a]);
 			}
@@ -60,6 +62,7 @@ function handle(q) {
 
 function csv(json) {
 	var out = "";
+
 	for (var i in json) {
 		for (var j in json[i]) {
 			out += '"' + json[i][j] + '";';
@@ -72,7 +75,8 @@ function csv(json) {
 
 function query_name(term, cb) {
 	var uri = "http://ab.uni-ulm.de/ab/search.pl?group=all&lang=de&query=" + term;
-	var body = []
+	var body = [];
+
 	http.get(uri, function(res) {
 		res.setEncoding("utf8");
 		res.on('data', function (chunk) {
@@ -103,6 +107,7 @@ function query_name(term, cb) {
 
 (function init() {
 	var headings = '"Name";"Einrichtung";"Gebaeude";"E-Mail";"Telefon";"Telefax";"Mobil";"WWW";\n';
+
 	fs.writeFile(filename, headings, function (err) {
 		if (err) throw err;
 	});
@@ -114,7 +119,7 @@ function query_name(term, cb) {
 })();
 
 
-// rewrite all below. this is ugly and i am ashamed of my 2-year younger self.
+/* rewrite all below. this is ugly and i am ashamed of my 2-year younger self. */
 String.prototype.trim = function() { return this.replace(/^\s+|\s+$/, ''); };
 
 function getTdContent(content, nr, typ) {
