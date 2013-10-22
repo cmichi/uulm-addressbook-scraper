@@ -2,7 +2,7 @@ var fs = require("fs");
 var http = require("http");
 
 /* create alphabet */
-var alphabet = ['Ü', 'Ä', 'Ö'];
+var alphabet = ['Ü', 'Ä', 'Ö', 'ß'];
 for (var i = 65; i < 65 + 26; i++) {
 	alphabet.push(String.fromCharCode(i));
 }
@@ -17,6 +17,7 @@ var not_yet_returned = 0;
 var queue = [];
 var worker_interval;
 var limit = 15;
+var filename = "results-utf8.csv";
 
 function worker(q) {
 	if (queue.length === 0 && not_yet_returned <= 0)
@@ -46,7 +47,7 @@ function handle(q) {
 			}
 		} else {
 			if (result.length > 0) {
-				fs.appendFile('results.csv', csv(result), function (err) {
+				fs.appendFile(filename, csv(result), function (err) {
 					if (err) throw err;
 				});
 			}
@@ -99,7 +100,7 @@ function query_name(term, cb) {
 
 (function init() {
 	var headings = '"Name";"Einrichtung";"Gebaeude";"E-Mail";"Telefon";"Telefax";"Mobil";"WWW";\n';
-	fs.writeFile('results.csv', headings, function (err) {
+	fs.writeFile(filename, headings, function (err) {
 		if (err) throw err;
 	});
 
