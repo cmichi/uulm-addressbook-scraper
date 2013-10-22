@@ -16,16 +16,16 @@ char. */
 var not_yet_returned = 0;
 var queue = [];
 var worker_interval;
+var limit = 15;
 
 function worker(q) {
 	if (queue.length === 0 && not_yet_returned === 0)
 		clearInterval(worker_interval);
 
-	if (not_yet_returned > 10) {
-		//console.log("timeout")
+	if (not_yet_returned > limit) {
 		return;
-	} else if (not_yet_returned <= 10) {
-		for (i = 0; i < 10 - not_yet_returned; i++) {
+	} else if (not_yet_returned > 0 && not_yet_returned <= limit) {
+		for (i = 0; i < limit - not_yet_returned; i++) {
 			if (queue.length === 0) continue;
 			handle(queue.pop());
 		}
@@ -103,7 +103,7 @@ function query_name(term, cb) {
 	for (var a in alphabet) {
 		queue.push(alphabet[a]);
 	}
-	worker_interval = setInterval(worker, 1000);
+	worker_interval = setInterval(worker, 2000);
 })();
 
 
