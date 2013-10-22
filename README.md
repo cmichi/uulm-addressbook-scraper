@@ -6,7 +6,7 @@ Simple scraper for the [address book of the University Ulm]
 
 	$ time node scraper.js > ./log
 
-**Project status:** Quick hack. Works. Code should be prettified.
+**Project status:** Quick hack. Works. Code should be prettified.  
 Takes ~8 min on a server with a 100 MiB/s connection. The resulting
 `results-utf8.csv` contains 6821 rows (heading row included).
 
