@@ -2,7 +2,7 @@
 
 Simple scraper for the [address book of the University Ulm]
 (http://ab.uni-ulm.de). All addresses are scraped into a file 
-`results.csv`.
+`results-utf8.csv`.
 
 	$ time node scraper.js > ./log
 
