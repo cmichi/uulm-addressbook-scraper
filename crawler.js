@@ -19,12 +19,12 @@ var worker_interval;
 var limit = 15;
 
 function worker(q) {
-	if (queue.length === 0 && not_yet_returned === 0)
+	if (queue.length === 0 && not_yet_returned <= 0)
 		clearInterval(worker_interval);
 
 	if (not_yet_returned > limit) {
 		return;
-	} else if (not_yet_returned > 0 && not_yet_returned <= limit) {
+	} else if (queue.length >  0 && not_yet_returned <= limit) {
 		for (i = 0; i < limit - not_yet_returned; i++) {
 			if (queue.length === 0) continue;
 			handle(queue.pop());
@@ -70,6 +70,7 @@ function query_name(term, cb) {
 	var uri = "http://ab.uni-ulm.de/ab/search.pl?group=all&lang=de&query=" + term;
 	var body = []
 	http.get(uri, function(res) {
+		res.setEncoding("utf8");
 		res.on('data', function (chunk) {
 			body.push(chunk);
 		});
@@ -90,7 +91,9 @@ function query_name(term, cb) {
 			}
 		});
 	}).on('error', function(e) {
-		console.log("Got error: " + e.message);
+		not_yet_returned--;
+		handle(term);
+		console.log("Got error: " + e.message + " (" + term + ")");
 	});;
 }
 
@@ -125,11 +128,13 @@ function getTdContent(content, nr, typ) {
 	content = content.replace(/<\/td>/g, "");
 	content = content.replace(/<td>/g, "");
 	content = content.replace(/<\/tr>/g, "");
-	content = content.replace(/<br>/g, "");
-	content = content.replace(/\t/g, "");
-	content = content.replace(/\n/g, "").trim();
+	content = content.replace(/<br>*/g, "");
+	content = content.replace(/\t*/g, "");
+	content = content.replace(/\n*/g, "").trim();
 	//content = content.replace(/\"/g, '"').trim();
 	//content = content.replace(/'/g, '"').trim();
+
+	//content = content.replace("ß", "ss");
 
 	if (typ == "telefon" || typ == "telefax") {
 		nummern = content.split('+');
