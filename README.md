@@ -10,6 +10,10 @@ Simple scraper for the [address book of the University Ulm]
 Takes ~8 min on a server with a 100 MiB/s connection. The resulting
 `results-utf8.csv` contains 6821 rows (heading row included).
 
+There are other sources for address/names/etc. of university staff.
+See [this visualization](https://github.com/UlmApi/uulm-firstname-statistic)
+of firstname distribution at the University Ulm for further sources.
+
 
 # Nice to have
 
