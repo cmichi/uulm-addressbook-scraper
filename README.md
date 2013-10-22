@@ -4,7 +4,7 @@ Simple scraper for the [address book of the University Ulm]
 (http://ab.uni-ulm.de). All addresses are scraped into a file 
 `results.csv`.
 
-	$ time node crawler.js > ./log
+	$ time node scraper.js > ./log
 
 **Project status:** Quick hack. Works. Code should be prettified.
 Takes ~8 min on a server with a 100 MiB/s connection. The resulting
