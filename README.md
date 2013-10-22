@@ -7,7 +7,7 @@ Simple scraper for the [address book of the University Ulm]
 	$ time node crawler.js > ./log
 
 **Project status:** Quick hack. Works. Code should be prettified.
-Takes ~15 min on a server with a 100 MiB/s wire.
+Takes ~15 min on a server with a 100 MiB/s connection.
 
 
 # Nice to have
