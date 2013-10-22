@@ -19,10 +19,11 @@ of firstname distribution at the University Ulm for further sources.
 
 I would like to rewrite it using a distributed Master/Worker pattern. 
 It should be possible to add a list of different
-workers (`workers = [ ["localhost", "10.0.0.1", ..."] ]`).
+workers e.g. `var workers = [ ["localhost", "10.0.0.1", ..."] ]`.
 
 The Master should dynamically delegate a list of URIs to scrape to 
-the different workers. I think this will speed things up.
+the different workers. I think this will speed things up (and it
+will be fun :-)!).
 
 
 # License

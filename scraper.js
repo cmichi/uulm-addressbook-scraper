@@ -7,12 +7,15 @@ for (var i = 65; i < 65 + 26; i++) {
 	alphabet.push(String.fromCharCode(i));
 }
 
+/* use simple alphabets for debugging */
 //alphabet = ['A', 'B', 'C', 'D'];
 //alphabet = ['A', 'B'];
 
-/* query each thing in alphabet. if return value == "too many results" pop
-this element and insert a new one containing the query + each alphabet
-char. */
+/* query each char in alphabet. if return value == "too many results" pop
+this element from the queue and insert a list of new ones: 
+queried_element + each character in the alphabet. 
+
+do this recursively. */
 var not_yet_returned = 0;
 var queue = [];
 var worker_interval;
@@ -111,7 +114,7 @@ function query_name(term, cb) {
 })();
 
 
-// rewrite all below!
+// rewrite all below. this is ugly and i am ashamed of my 2-year younger self.
 String.prototype.trim = function() { return this.replace(/^\s+|\s+$/, ''); };
 
 function getTdContent(content, nr, typ) {
