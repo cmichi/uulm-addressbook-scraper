@@ -10,7 +10,7 @@ Simple scraper for the [address book of the University Ulm]
 Takes ~8 min on a server with a 100 MiB/s connection. The resulting
 `results-utf8.csv` contains 6821 rows (heading row included).
 
-There are other sources for address/names/etc. of university staff.
+There are other sources for addresses/names/etc. of university staff.
 See [this visualization](https://github.com/UlmApi/uulm-firstname-statistic)
 of firstname distribution at the University Ulm for further sources.
 
@@ -19,7 +19,7 @@ of firstname distribution at the University Ulm for further sources.
 
 I would like to rewrite it using a distributed Master/Worker pattern. 
 It should be possible to add a list of different
-workers e.g. `var workers = [ ["localhost", "10.0.0.1", ..."] ]`.
+workers e.g. `var workers = [ ["localhost", "10.0.0.1", ..."], [...], ... ]`.
 
 The Master should dynamically delegate a list of URIs to scrape to 
 the different workers. I think this will speed things up (and it
