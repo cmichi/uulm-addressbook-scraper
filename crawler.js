@@ -1,6 +1,5 @@
-var request = require('ahr');
-var jsdom = require("jsdom");
 var fs = require("fs");
+var http = require("http");
 
 /* create alphabet */
 var alphabet = ['Ü', 'Ä', 'Ö'];
@@ -8,8 +7,8 @@ for (var i = 65; i < 65 + 26; i++) {
 	alphabet.push(String.fromCharCode(i));
 }
 
-alphabet = ['A', 'B', 'C', 'D'];
-alphabet = ['A', 'B'];
+//alphabet = ['A', 'B', 'C', 'D'];
+//alphabet = ['A', 'B'];
 
 /* query each thing in alphabet. if return value == "too many results" pop
 this element and insert a new one containing the query + each alphabet
@@ -46,9 +45,11 @@ function handle(q) {
 				queue.push(q + alphabet[a]);
 			}
 		} else {
-			fs.appendFile('results.csv', csv(result), function (err) {
-				if (err) throw err;
-			});
+			if (result.length > 0) {
+				fs.appendFile('results.csv', csv(result), function (err) {
+					if (err) throw err;
+				});
+			}
 		}
 	});
 }
@@ -66,23 +67,31 @@ function csv(json) {
 }
 
 function query_name(term, cb) {
-	var get_params = {group: "all", lang: "de", query: term};
-	request.get("http://ab.uni-ulm.de/ab/search.pl", get_params, 
-			{timeout: 10000})
-		.when(function (err, _, data) {
-			if (err) throw err;
+	var uri = "http://ab.uni-ulm.de/ab/search.pl?group=all&lang=de&query=" + term;
+	var body = []
+	http.get(uri, function(res) {
+		res.on('data', function (chunk) {
+			body.push(chunk);
+		});
 
-			content = data.toString("utf8");
-			//console.log(content);
+		res.on('end', function () {
+			var content = body.join();
 
 			if (content.match(/Bitte genaueren Suchbegriff eingeben./gi)) {
+				console.log("specify term for " + term);
 				cb(false);
+			} else if (content.match(/Kein Eintrag vorhanden./gi)) {
+				console.log("no results for " + term);
+				cb([]);
 			} else {
 				var data = parse(content);
-				console.log("done with " + term);
+				console.log("done with " + term + " (" + data.length + ")");
 				cb(data);
 			}
-	});
+		});
+	}).on('error', function(e) {
+		console.log("Got error: " + e.message);
+	});;
 }
 
 (function init() {
@@ -94,7 +103,7 @@ function query_name(term, cb) {
 	for (var a in alphabet) {
 		queue.push(alphabet[a]);
 	}
-	worker_interval = setInterval(worker, 500);
+	worker_interval = setInterval(worker, 1000);
 })();
 
 
